@@ -19,7 +19,6 @@ import static javafx.scene.input.KeyCode.SPACE;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 
-import javafx.fxml.FXML;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
@@ -40,14 +39,6 @@ public class MainAppController {
     public void initialize() {
         spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
         
-        if(spaceShip.isDead() == true){
-            animation.stop();
-            Text txtGameOver = new Text("Game Over");
-            txtGameOver.setFill(Color.RED);
-            txtGameOver.setTextAlignment(TextAlignment.CENTER);
-            txtGameOver.setFont(new Font(30));
-            
-        }
     }
     public void initGameComponents() {
         createContent();
@@ -155,6 +146,17 @@ public class MainAppController {
 
     public void stopAnimation() {
         if (animation != null) {
+            animation.stop();
+        }
+    }
+    public void checkGameOver(){
+        if(spaceShip.isDead()){
+            Text gameOverText = new Text("Game Over");
+            gameOverText.setFont(Font.font(100));
+            gameOverText.setFill(Color.RED);
+            gameOverText.setX(200);
+            gameOverText.setY(300);
+            pane.getChildren().add(gameOverText);
             animation.stop();
         }
     }
