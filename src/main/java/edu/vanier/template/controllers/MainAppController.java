@@ -53,19 +53,11 @@ public class MainAppController {
         createContent();
         this.scene.setOnKeyPressed(e -> {
             switch (e.getCode()) {
-                case A:
-                    spaceShip.moveLeft();
-                    break;
-                case D:
-                    spaceShip.moveRight();
-                    break;
-                case SPACE:
-                    shoot(spaceShip);
-                    break;
-                case W:
-                    spaceShip.moveUp();
-                case S:
-                    spaceShip.moveDown();
+                case A -> spaceShip.moveLeft();
+                case D -> spaceShip.moveRight();
+                case SPACE -> shoot(spaceShip);
+                case W -> spaceShip.moveUp();
+                case S -> spaceShip.moveDown();
  
             }
         });
