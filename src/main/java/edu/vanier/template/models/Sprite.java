@@ -14,6 +14,7 @@ import javafx.scene.shape.Rectangle;
 public class Sprite extends Rectangle{
     private boolean dead = false;
     private final SpriteType type;
+    private int health = 3;
     
     public Sprite(int x, int y, int w, int h, SpriteType type, Color color){
         super(w,h,color);
@@ -48,6 +49,12 @@ public class Sprite extends Rectangle{
 
     public void setDead(boolean dead) {
         this.dead = dead;
+    }
+    public int getHealth(){
+        return this.health;
+    }
+    public void decreaseHealth(){
+        this.health--;
     }
     
     public enum SpriteType {

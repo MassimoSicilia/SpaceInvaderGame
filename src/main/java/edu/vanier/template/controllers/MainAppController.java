@@ -82,7 +82,6 @@ public class MainAppController {
 
     private void update() {
         elapsedTime += 0.016;
-        int health = 3;
 
         sprites().forEach(sprite -> {
             switch (sprite.getType()) {
@@ -91,10 +90,11 @@ public class MainAppController {
                     sprite.moveDown();
 
                     if (sprite.getBoundsInParent().intersects(spaceShip.getBoundsInParent())) {
-                        int updatedHealth = health - 3;
-                        if(updatedHealth == 0){
+                        sprite.setDead(true);
+                        spaceShip.decreaseHealth();
+                        if(spaceShip.getHealth() == 0){
                             spaceShip.setDead(true);
-                            sprite.setDead(true);
+                            checkGameOver();
                         }
                     }
                 }
@@ -121,8 +121,12 @@ public class MainAppController {
         });
 
         pane.getChildren().removeIf(n -> {
+            try{
             Sprite sprite = (Sprite) n;
             return sprite.isDead();
+            }catch(Exception e){
+                return false;
+            }
         });
 
         if (elapsedTime > 2) {
@@ -152,7 +156,7 @@ public class MainAppController {
     public void checkGameOver(){
         if(spaceShip.isDead()){
             Text gameOverText = new Text("Game Over");
-            gameOverText.setFont(Font.font(100));
+            gameOverText.setFont(Font.font(50));
             gameOverText.setFill(Color.RED);
             gameOverText.setX(200);
             gameOverText.setY(300);
