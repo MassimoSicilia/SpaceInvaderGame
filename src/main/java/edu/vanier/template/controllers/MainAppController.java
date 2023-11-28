@@ -23,6 +23,7 @@ import javafx.scene.layout.BackgroundPosition;
 import javafx.scene.layout.BackgroundRepeat;
 import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.Pane;
+import javafx.scene.media.AudioClip;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -43,7 +44,9 @@ public class MainAppController {
     private Sprite spaceShip;
     private Scene scene;
     AnimationTimer animation;
-   
+    public static AudioClip explosion = new AudioClip(MainAppController.class.getResource("/sounds/8bit_bomb_explosion.wav").toExternalForm());
+    public static AudioClip gamewon = new AudioClip(MainAppController.class.getResource("/sounds/round_end.wav").toExternalForm());
+    public static AudioClip gameOver = new AudioClip(MainAppController.class.getResource("/sounds/GameOver.wav").toExternalForm());
 
     Image enemy1 = new Image("/images/enemyGreen2.png");
     Image player = new Image("/images/playerShip1_blue.png");
@@ -109,6 +112,7 @@ public class MainAppController {
                     sprite.moveDown();
 
                     if (sprite.getBoundsInParent().intersects(spaceShip.getBoundsInParent())) {
+                        explosion.play();
                         sprite.setDead(true);
                         spaceShip.decreaseHealth();
                         if(spaceShip.getHealth() == 0){
@@ -123,6 +127,7 @@ public class MainAppController {
 
                     sprites().stream().filter(e -> e.getType().equals(SpriteType.ENEMY)).forEach(enemy -> {
                         if (sprite.getBoundsInParent().intersects(enemy.getBoundsInParent())) {
+                            explosion.play();
                             enemy.setDead(true);
                             sprite.setDead(true);
                         }
@@ -182,9 +187,9 @@ public class MainAppController {
             gameOverText.setY(300);
             pane.getChildren().add(gameOverText);
             animation.stop();
+            gameOver.play();
         }
     }
-
     
     
 }
