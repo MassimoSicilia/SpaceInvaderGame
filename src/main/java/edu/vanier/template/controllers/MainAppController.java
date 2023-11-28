@@ -11,13 +11,22 @@ import java.util.stream.Collectors;
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import static javafx.scene.input.KeyCode.A;
 import static javafx.scene.input.KeyCode.D;
 import static javafx.scene.input.KeyCode.W;
 import static javafx.scene.input.KeyCode.S;
 import static javafx.scene.input.KeyCode.SPACE;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -34,11 +43,19 @@ public class MainAppController {
     private Sprite spaceShip;
     private Scene scene;
     AnimationTimer animation;
+   
+
+    Image enemy1 = new Image("/images/enemyGreen2.png");
+    Image player = new Image("/images/playerShip1_blue.png");
+    Image bullet = new Image("/images/laserBlue01.png");
     
     @FXML
     public void initialize() {
         spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
-        
+        spaceShip.setFill(new ImagePattern(player));
+        pane.setBackground(new Background(new BackgroundImage(new Image("/images/starfield_alpha.png"), 
+                BackgroundRepeat.REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT,BackgroundSize.DEFAULT)));
+
     }
     public void initGameComponents() {
         createContent();
@@ -65,12 +82,14 @@ public class MainAppController {
             }
         };
         animation.start();
-        nextLevel();        
+        nextLevel(); 
+        
     }
 
     private void nextLevel() {
         for (int i = 0; i < 5; i++) {
-            Sprite invader = new Sprite(90 + i * 100, 150, 30, 30, SpriteType.ENEMY, Color.RED);
+            Sprite invader = new Sprite(20 + i * 100, 150, 30, 30, SpriteType.ENEMY, Color.RED);
+            invader.setFill(new ImagePattern(enemy1));
 
             pane.getChildren().add(invader);
         }
@@ -140,7 +159,8 @@ public class MainAppController {
         else if (whoType.equals(SpriteType.ENEMY)) whoType = SpriteType.ENEMY_BULLET;
         Sprite s = new Sprite((int) who.getTranslateX() + 20, 
                 (int) who.getTranslateY(), 5, 20, whoType, 
-                Color.BLACK);
+                Color.LIGHTYELLOW);
+        s.setFill(new ImagePattern(bullet));
         pane.getChildren().add(s);
     }
 

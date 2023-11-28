@@ -5,6 +5,7 @@
 package edu.vanier.template.models;
 
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Rectangle;
 
 /**
@@ -21,7 +22,6 @@ public class Sprite extends Rectangle{
         this.type = type;
         setTranslateX(x);
         setTranslateY(y);
-        
     }
      public void moveLeft() {
         setTranslateX(getTranslateX() - 5);
