@@ -4,12 +4,15 @@
  */
 package edu.vanier.template.controllers;
 
+import com.sun.source.tree.ContinueTree;
 import edu.vanier.template.models.Sprite;
 import edu.vanier.template.models.Sprite.SpriteType;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import static javafx.scene.input.KeyCode.A;
@@ -42,15 +45,19 @@ public class MainAppController {
     private Pane pane;
     private double elapsedTime = 0;
     private Sprite spaceShip;
+    private Sprite invader;
     private Scene scene;
     AnimationTimer animation;
     public static AudioClip explosion = new AudioClip(MainAppController.class.getResource("/sounds/8bit_bomb_explosion.wav").toExternalForm());
     public static AudioClip gamewon = new AudioClip(MainAppController.class.getResource("/sounds/round_end.wav").toExternalForm());
     public static AudioClip gameOver = new AudioClip(MainAppController.class.getResource("/sounds/GameOver.wav").toExternalForm());
 
+ 
     Image enemy1 = new Image("/images/enemyGreen2.png");
     Image player = new Image("/images/playerShip1_blue.png");
     Image bullet = new Image("/images/laserBlue01.png");
+    
+  
     
     @FXML
     public void initialize() {
@@ -90,16 +97,35 @@ public class MainAppController {
     }
 
     private void nextLevel() {
-        for (int i = 0; i < 5; i++) {
-            Sprite invader = new Sprite(20 + i * 100, 150, 30, 30, SpriteType.ENEMY, Color.RED);
-            invader.setFill(new ImagePattern(enemy1));
-
-            pane.getChildren().add(invader);
+        
+        int rows = 3;
+        int columns = 5;
+        int invaderWidth = 30;
+        int invaderHeight = 30;
+        
+        for(int i = 0; i < rows;i++ ){
+            for(int j = 0; j <columns; j++){
+                int x = 100 + j * (invaderWidth + 50);
+                int y = 150 + i*(invaderHeight + 50);
+                
+                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.CORAL);
+                invader.setFill(new ImagePattern(enemy1));
+                
+                pane.getChildren().add(invader);
+                
+            }
         }
+
     }
 
     private List<Sprite> sprites() {
+        try{
         return pane.getChildren().stream().map(n -> (Sprite) n).collect(Collectors.toList());
+        }catch(Exception e){
+            e.getMessage();
+        }
+        return null;
+        
     }
 
     private void update() {
@@ -130,14 +156,21 @@ public class MainAppController {
                             explosion.play();
                             enemy.setDead(true);
                             sprite.setDead(true);
+                            checkGameWon();
                         }
                     });
                 }
 
                 case ENEMY -> {
                     if (elapsedTime > 2) {
-                        if (Math.random() < 0.3) {
-                            shoot(sprite);
+                        if (Math.random() < 0.1) {
+                        }
+                    }
+                    if(elapsedTime > 2){
+                        if(Math.random() < 0.5){
+                            sprite.moveRight();
+                        }else{
+                            sprite.moveLeft();
                         }
                     }
                 }
@@ -191,5 +224,32 @@ public class MainAppController {
         }
     }
     
+    public void checkGameWon(){
+        boolean invaderExists = false;
+        
+        for(Node node : pane.getChildren()){
+            if(node instanceof Sprite){
+                Sprite sprite = (Sprite) node;
+                if(sprite.getType() == SpriteType.ENEMY){
+                    invaderExists = true;
+                    
+                }if(sprite.getType() == SpriteType.PLAYER){
+                    continue;
+                } if(!invaderExists){
+            Text winner = new Text("Winner Winner \nChicken Dinner");
+            winner.setFont(Font.font(50));
+            winner.setFill(Color.BLUE);
+            winner.setX(100);
+            winner.setY(300);
+            pane.getChildren().add(winner);
+            gamewon.play();
+            animation.stop();
+                    
+                }
+            }
+        }
+            
+        }
     
-}
+    
+    }
