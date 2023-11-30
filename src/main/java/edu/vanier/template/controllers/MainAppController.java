@@ -8,12 +8,16 @@ import com.sun.source.tree.ContinueTree;
 import edu.vanier.template.models.Sprite;
 import edu.vanier.template.models.Sprite.SpriteType;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.animation.AnimationTimer;
+import javafx.animation.FadeTransition;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import static javafx.scene.input.KeyCode.A;
 import static javafx.scene.input.KeyCode.D;
@@ -35,6 +39,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.util.Duration;
 
 /**
  *
@@ -47,7 +52,9 @@ public class MainAppController {
     private Sprite spaceShip;
     private Sprite invader;
     private Scene scene;
+    private int numOfEnemies;
     AnimationTimer animation;
+    
     public static AudioClip explosion = new AudioClip(MainAppController.class.getResource("/sounds/8bit_bomb_explosion.wav").toExternalForm());
     public static AudioClip gamewon = new AudioClip(MainAppController.class.getResource("/sounds/round_end.wav").toExternalForm());
     public static AudioClip gameOver = new AudioClip(MainAppController.class.getResource("/sounds/GameOver.wav").toExternalForm());
@@ -56,13 +63,14 @@ public class MainAppController {
     Image enemy1 = new Image("/images/enemyGreen2.png");
     Image player = new Image("/images/playerShip1_blue.png");
     Image bullet = new Image("/images/laserBlue01.png");
+    Image explosionEffect = new Image("/images/explosion00.png");
     
   
     
     @FXML
     public void initialize() {
-        spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
-        spaceShip.setFill(new ImagePattern(player));
+        levelOne();
+        
         pane.setBackground(new Background(new BackgroundImage(new Image("/images/starfield_alpha.png"), 
                 BackgroundRepeat.REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT,BackgroundSize.DEFAULT)));
 
@@ -83,7 +91,6 @@ public class MainAppController {
 
     private void createContent() {
         pane.setPrefSize(600, 800);
-        pane.getChildren().add(spaceShip);
         //-- Create the game loop.
         animation = new AnimationTimer() {
             @Override
@@ -92,31 +99,31 @@ public class MainAppController {
             }
         };
         animation.start();
-        nextLevel(); 
+//        nextLevel(); 
         
     }
 
-    private void nextLevel() {
-        
-        int rows = 3;
-        int columns = 5;
-        int invaderWidth = 30;
-        int invaderHeight = 30;
-        
-        for(int i = 0; i < rows;i++ ){
-            for(int j = 0; j <columns; j++){
-                int x = 100 + j * (invaderWidth + 50);
-                int y = 150 + i*(invaderHeight + 50);
-                
-                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.CORAL);
-                invader.setFill(new ImagePattern(enemy1));
-                
-                pane.getChildren().add(invader);
-                
-            }
-        }
-
-    }
+//    private void nextLevel() {
+//        
+//        int rows = 3;
+//        int columns = 5;
+//        int invaderWidth = 30;
+//        int invaderHeight = 30;
+//        
+//        for(int i = 0; i < rows;i++ ){
+//            for(int j = 0; j <columns; j++){
+//                int x = 100 + j * (invaderWidth + 50);
+//                int y = 150 + i*(invaderHeight + 50);
+//                
+//                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.CORAL);
+//                invader.setFill(new ImagePattern(enemy1));
+//                
+//                pane.getChildren().add(invader);
+//                
+//            }
+//        }
+//
+//    }
 
     private List<Sprite> sprites() {
         try{
@@ -138,11 +145,12 @@ public class MainAppController {
                     sprite.moveDown();
 
                     if (sprite.getBoundsInParent().intersects(spaceShip.getBoundsInParent())) {
-                        explosion.play();
                         sprite.setDead(true);
                         spaceShip.decreaseHealth();
+                        
                         if(spaceShip.getHealth() == 0){
                             spaceShip.setDead(true);
+                            pane.getChildren().remove(spaceShip);
                             checkGameOver();
                         }
                     }
@@ -153,17 +161,16 @@ public class MainAppController {
 
                     sprites().stream().filter(e -> e.getType().equals(SpriteType.ENEMY)).forEach(enemy -> {
                         if (sprite.getBoundsInParent().intersects(enemy.getBoundsInParent())) {
-                            explosion.play();
                             enemy.setDead(true);
                             sprite.setDead(true);
-                            checkGameWon();
                         }
                     });
                 }
 
                 case ENEMY -> {
                     if (elapsedTime > 2) {
-                        if (Math.random() < 0.1) {
+                        if (Math.random() < 0.2) {
+                            shoot(sprite);
                         }
                     }
                     if(elapsedTime > 2){
@@ -197,9 +204,29 @@ public class MainAppController {
         else if (whoType.equals(SpriteType.ENEMY)) whoType = SpriteType.ENEMY_BULLET;
         Sprite s = new Sprite((int) who.getTranslateX() + 20, 
                 (int) who.getTranslateY(), 5, 20, whoType, 
-                Color.LIGHTYELLOW);
+                Color.TRANSPARENT);
         s.setFill(new ImagePattern(bullet));
         pane.getChildren().add(s);
+        
+        //explosion effect for player
+        Sprite explosionSprite = new Sprite((int) who.getTranslateX(),
+                (int) who.getTranslateY()-10, 30,30, 
+                SpriteType.EXPLOSION, Color.TRANSPARENT);
+        explosionSprite.setFill(new ImagePattern(explosionEffect));
+        pane.getChildren().add(explosionSprite);
+        
+        
+        //removing effect
+        FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.5),explosionSprite);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+        fadeOut.setOnFinished(e -> pane.getChildren().remove(explosionSprite));
+        fadeOut.play();
+        
+        
+  
+        
+        explosion.play();
     }
 
     public void setScene(Scene scene) {
@@ -223,33 +250,82 @@ public class MainAppController {
             gameOver.play();
         }
     }
+
     
-    public void checkGameWon(){
-        boolean invaderExists = false;
+    private void levelOne(){
+        int rows = 3;
+        int columns = 5;
+        int invaderWidth = 30;
+        int invaderHeight = 30;
         
-        for(Node node : pane.getChildren()){
-            if(node instanceof Sprite){
-                Sprite sprite = (Sprite) node;
-                if(sprite.getType() == SpriteType.ENEMY){
-                    invaderExists = true;
-                    
-                }if(sprite.getType() == SpriteType.PLAYER){
-                    continue;
-                } if(!invaderExists){
-            Text winner = new Text("Winner Winner \nChicken Dinner");
-            winner.setFont(Font.font(50));
-            winner.setFill(Color.BLUE);
-            winner.setX(100);
-            winner.setY(300);
-            pane.getChildren().add(winner);
-            gamewon.play();
-            animation.stop();
-                    
-                }
+         for(int i = 0; i < rows;i++ ){
+            for(int j = 0; j <columns; j++){
+                int x = 100 + j * (invaderWidth + 50);
+                int y = 150 + i*(invaderHeight + 50);
+                
+                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
+                invader.setFill(new ImagePattern(enemy1));
+                
+                pane.getChildren().add(invader);
+                
             }
         }
-            
+        spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
+        spaceShip.setFill(new ImagePattern(player));
+        
+        pane.getChildren().add(spaceShip);
+         
+        
+    }
+    private void levelTwo(){
+        int rows = 3;
+        int columns = 6;
+        int invaderWidth = 30;
+        int invaderHeight = 30;
+        
+         for(int i = 0; i < rows;i++ ){
+            for(int j = 0; j <columns; j++){
+                int x = 100 + j * (invaderWidth + 50);
+                int y = 150 + i*(invaderHeight + 50);
+                
+                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
+                invader.setFill(new ImagePattern(enemy1));
+                
+                pane.getChildren().add(invader);
+                
+            }
         }
+        spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
+        spaceShip.setFill(new ImagePattern(player));
+        
+        pane.getChildren().add(spaceShip);
+
+    }
     
-    
+    private void levelThree(){
+        int rows = 4;
+        int columns = 5;
+        int invaderWidth = 30;
+        int invaderHeight = 30;
+        
+         for(int i = 0; i < rows;i++ ){
+            for(int j = 0; j <columns; j++){
+                int x = 100 + j * (invaderWidth + 50);
+                int y = 150 + i*(invaderHeight + 50);
+                
+                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
+                invader.setFill(new ImagePattern(enemy1));
+                
+                pane.getChildren().add(invader);
+                
+            }
+        }
+         spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
+        spaceShip.setFill(new ImagePattern(player));
+        
+        pane.getChildren().add(spaceShip);
+         
+        
+    }
+
     }

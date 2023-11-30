@@ -36,7 +36,6 @@ public class MainApp extends Application{
         Scene scene = new Scene(root,600, 820);
         controller.setScene(scene);
         controller.initGameComponents();
-        controller.checkGameOver();
         primaryStage.setScene(scene);
         primaryStage.setTitle("game");
         primaryStage.setAlwaysOnTop(true);

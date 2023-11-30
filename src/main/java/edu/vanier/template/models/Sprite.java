@@ -62,6 +62,7 @@ public class Sprite extends Rectangle{
        PLAYER_BULLET,
        PLAYER,
        ENEMY,
+       EXPLOSION;
     }
    
 }
