@@ -4,18 +4,13 @@
  */
 package edu.vanier.template.controllers;
 
-import com.sun.source.tree.ContinueTree;
 import edu.vanier.template.models.Sprite;
 import edu.vanier.template.models.Sprite.SpriteType;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.animation.AnimationTimer;
 import javafx.animation.FadeTransition;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -33,12 +28,10 @@ import javafx.scene.layout.Pane;
 import javafx.scene.media.AudioClip;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
+
 
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 
 /**
@@ -53,6 +46,7 @@ public class MainAppController {
     private Sprite invader;
     private Scene scene;
     private int numOfEnemies;
+    private int currentLevel = 1;
     AnimationTimer animation;
     
     public static AudioClip explosion = new AudioClip(MainAppController.class.getResource("/sounds/8bit_bomb_explosion.wav").toExternalForm());
@@ -163,6 +157,7 @@ public class MainAppController {
                         if (sprite.getBoundsInParent().intersects(enemy.getBoundsInParent())) {
                             enemy.setDead(true);
                             sprite.setDead(true);
+                            numOfEnemies--;
                         }
                     });
                 }
@@ -253,6 +248,11 @@ public class MainAppController {
 
     
     private void levelOne(){
+//        Label lblNumofLives = new Label("Lives: " + spaceShip.getHealth());
+//        pane.getChildren().add(lblNumofLives);
+        
+        
+        numOfEnemies = 15;
         int rows = 3;
         int columns = 5;
         int invaderWidth = 30;
@@ -274,7 +274,11 @@ public class MainAppController {
         spaceShip.setFill(new ImagePattern(player));
         
         pane.getChildren().add(spaceShip);
-         
+        
+        if(numOfEnemies == 0){
+            levelTwo();
+        }
+         changelevel(currentLevel);
         
     }
     private void levelTwo(){
@@ -326,6 +330,24 @@ public class MainAppController {
         pane.getChildren().add(spaceShip);
          
         
+    }
+    private void changelevel(int currentLevel){
+        switch(currentLevel){
+            case 0 -> {
+                levelOne();
+                currentLevel++;
+                }
+            case 1 -> {
+                levelTwo();
+                currentLevel++;
+                }
+            case 2 -> {
+                levelThree();
+                currentLevel++;
+            }
+        }
+        
+    
     }
 
     }
