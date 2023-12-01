@@ -19,6 +19,7 @@ import static javafx.scene.input.KeyCode.D;
 import static javafx.scene.input.KeyCode.W;
 import static javafx.scene.input.KeyCode.S;
 import static javafx.scene.input.KeyCode.SPACE;
+import static javafx.scene.input.KeyCode.R;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundPosition;
@@ -28,6 +29,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.media.AudioClip;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
+import javafx.scene.paint.Paint;
 
 
 import javafx.scene.text.Font;
@@ -44,20 +46,32 @@ public class MainAppController {
     private double elapsedTime = 0;
     private Sprite spaceShip;
     private Sprite invader;
+    private Sprite bullet;
     private Scene scene;
     private int numOfEnemies;
     private int currentLevel = 1;
     AnimationTimer animation;
-    
+
     public static AudioClip explosion = new AudioClip(MainAppController.class.getResource("/sounds/8bit_bomb_explosion.wav").toExternalForm());
     public static AudioClip gamewon = new AudioClip(MainAppController.class.getResource("/sounds/round_end.wav").toExternalForm());
     public static AudioClip gameOver = new AudioClip(MainAppController.class.getResource("/sounds/GameOver.wav").toExternalForm());
 
- 
-    Image enemy1 = new Image("/images/enemyGreen2.png");
-    Image player = new Image("/images/playerShip1_blue.png");
-    Image bullet = new Image("/images/laserBlue01.png");
+    Image enemyGreen = new Image("/images/enemyGreen3.png");
+    Image enemyBlack = new Image("images/enemyBlack1.png");
+    Image enemyRed = new Image("images/enemyRed2.png");
+    Image playerBlue = new Image("/images/playerShip1_blue.png");
+    Image playerOrange = new Image("/images/playerShip3_orange.png");
+    Image playerRed = new Image("/images/playerShip3_red.png");
+    Image bulletBlue = new Image("/images/laserBlue01.png");
+    Image bulletRed = new Image("/images/laserRed01.png");
     Image explosionEffect = new Image("/images/explosion00.png");
+    Image enemyLaser = new Image("/laserGreen10.png");
+    
+    private final Paint redLaser = new ImagePattern(bulletRed);
+    private final Paint blueLaser = new ImagePattern(bulletBlue);
+    private Paint bulletColor = blueLaser;
+
+    
     
   
     
@@ -78,6 +92,7 @@ public class MainAppController {
                 case SPACE -> shoot(spaceShip);
                 case W -> spaceShip.moveUp();
                 case S -> spaceShip.moveDown();
+                case R -> changeBullet();
  
             }
         });
@@ -137,6 +152,7 @@ public class MainAppController {
 
                 case ENEMY_BULLET -> {
                     sprite.moveDown();
+                    
 
                     if (sprite.getBoundsInParent().intersects(spaceShip.getBoundsInParent())) {
                         sprite.setDead(true);
@@ -152,7 +168,7 @@ public class MainAppController {
 
                 case PLAYER_BULLET -> {
                     sprite.moveUp();
-
+                    try{
                     sprites().stream().filter(e -> e.getType().equals(SpriteType.ENEMY)).forEach(enemy -> {
                         if (sprite.getBoundsInParent().intersects(enemy.getBoundsInParent())) {
                             enemy.setDead(true);
@@ -160,6 +176,9 @@ public class MainAppController {
                             numOfEnemies--;
                         }
                     });
+                    }catch(Exception e){
+                        e.getMessage();
+                    }
                 }
 
                 case ENEMY -> {
@@ -197,11 +216,11 @@ public class MainAppController {
         SpriteType whoType = who.getType();
         if (whoType.equals(SpriteType.PLAYER)) whoType = SpriteType.PLAYER_BULLET;
         else if (whoType.equals(SpriteType.ENEMY)) whoType = SpriteType.ENEMY_BULLET;
-        Sprite s = new Sprite((int) who.getTranslateX() + 20, 
+        bullet = new Sprite((int) who.getTranslateX() + 20, 
                 (int) who.getTranslateY(), 5, 20, whoType, 
                 Color.TRANSPARENT);
-        s.setFill(new ImagePattern(bullet));
-        pane.getChildren().add(s);
+        bullet.setFill(bulletColor);
+        pane.getChildren().add(bullet);
         
         //explosion effect for player
         Sprite explosionSprite = new Sprite((int) who.getTranslateX(),
@@ -248,10 +267,7 @@ public class MainAppController {
 
     
     private void levelOne(){
-//        Label lblNumofLives = new Label("Lives: " + spaceShip.getHealth());
-//        pane.getChildren().add(lblNumofLives);
-        
-        
+
         numOfEnemies = 15;
         int rows = 3;
         int columns = 5;
@@ -264,21 +280,17 @@ public class MainAppController {
                 int y = 150 + i*(invaderHeight + 50);
                 
                  invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
-                invader.setFill(new ImagePattern(enemy1));
+                invader.setFill(new ImagePattern(enemyGreen));
                 
                 pane.getChildren().add(invader);
                 
             }
         }
         spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
-        spaceShip.setFill(new ImagePattern(player));
+        spaceShip.setFill(new ImagePattern(playerBlue));
         
         pane.getChildren().add(spaceShip);
         
-        if(numOfEnemies == 0){
-            levelTwo();
-        }
-         changelevel(currentLevel);
         
     }
     private void levelTwo(){
@@ -292,15 +304,15 @@ public class MainAppController {
                 int x = 100 + j * (invaderWidth + 50);
                 int y = 150 + i*(invaderHeight + 50);
                 
-                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
-                invader.setFill(new ImagePattern(enemy1));
+                invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
+                invader.setFill(new ImagePattern(enemyGreen));
                 
                 pane.getChildren().add(invader);
                 
             }
         }
         spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
-        spaceShip.setFill(new ImagePattern(player));
+        spaceShip.setFill(new ImagePattern(playerBlue));
         
         pane.getChildren().add(spaceShip);
 
@@ -318,14 +330,14 @@ public class MainAppController {
                 int y = 150 + i*(invaderHeight + 50);
                 
                  invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
-                invader.setFill(new ImagePattern(enemy1));
+                invader.setFill(new ImagePattern(enemyGreen));
                 
                 pane.getChildren().add(invader);
                 
             }
         }
          spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
-        spaceShip.setFill(new ImagePattern(player));
+        spaceShip.setFill(new ImagePattern(playerBlue));
         
         pane.getChildren().add(spaceShip);
          
@@ -348,6 +360,17 @@ public class MainAppController {
         }
         
     
+    }
+    
+    private void changeBullet(){
+        if(bulletColor == blueLaser){
+            bulletColor = redLaser;
+        }else if(bulletColor == redLaser){
+            bulletColor = blueLaser;
+        }
+        
+        
+
     }
 
     }
