@@ -38,6 +38,9 @@ public class Sprite extends Rectangle{
     public void moveDown() {
         setTranslateY(getTranslateY() + 5);
     }
+    public void enemyMoveDown() {
+        setTranslateY(getTranslateY() + 3);
+    }
 
     public boolean isDead() {
         return dead;

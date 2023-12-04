@@ -56,10 +56,10 @@ public class MainAppController {
     public static AudioClip gamewon = new AudioClip(MainAppController.class.getResource("/sounds/round_end.wav").toExternalForm());
     public static AudioClip gameOver = new AudioClip(MainAppController.class.getResource("/sounds/GameOver.wav").toExternalForm());
 
-    Image enemyGreen = new Image("/images/enemyGreen3.png");
+    Image enemyLevelOne = new Image("/images/enemyGreen3.png");
     Image enemyBlack = new Image("images/enemyBlack1.png");
     Image enemyRed = new Image("images/enemyRed2.png");
-    Image playerBlue = new Image("/images/playerShip1_blue.png");
+    Image playerLevelOne = new Image("/images/playerShip1_blue.png");
     Image playerOrange = new Image("/images/playerShip3_orange.png");
     Image playerRed = new Image("/images/playerShip3_red.png");
     Image bulletBlue = new Image("/images/laserBlue01.png");
@@ -191,8 +191,14 @@ public class MainAppController {
                 return false;
             }
         });
+        if(currentLevel == 1 || currentLevel == 2){
         if(numOfEnemies == 0){
             changelevel(currentLevel + 1);
+        }
+        }else if(currentLevel == 3){
+            if(numOfEnemies == 0){
+                checkGameWon();
+            }
         }
 
         if (elapsedTime > 2) {
@@ -274,7 +280,7 @@ public class MainAppController {
                 int y = 150 + i*(invaderHeight + 50);
                 
                  invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
-                invader.setFill(new ImagePattern(enemyGreen));
+                invader.setFill(new ImagePattern(enemyLevelOne));
                 
                 pane.getChildren().add(invader);
                 
@@ -282,7 +288,7 @@ public class MainAppController {
         }
          
         spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
-        spaceShip.setFill(new ImagePattern(playerBlue));
+        spaceShip.setFill(new ImagePattern(playerLevelOne));
         
         pane.getChildren().add(spaceShip);
         
@@ -291,6 +297,7 @@ public class MainAppController {
     private void levelTwo(){
         
         currentLevel = 2;
+        numOfEnemies = 18;
         int rows = 3;
         int columns = 6;
         int invaderWidth = 30;
@@ -308,13 +315,16 @@ public class MainAppController {
                 
             }
         }
+        spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
         spaceShip.setFill(new ImagePattern(playerRed));
+        pane.getChildren().add(spaceShip);
         
 
     }
     
     private void levelThree(){
         currentLevel = 3;
+        numOfEnemies = 20;
         int rows = 4;
         int columns = 5;
         int invaderWidth = 30;
@@ -325,17 +335,17 @@ public class MainAppController {
                 int x = 100 + j * (invaderWidth + 50);
                 int y = 150 + i*(invaderHeight + 50);
                 
-                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
+                invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
                 invader.setFill(new ImagePattern(enemyRed));
                 
                 pane.getChildren().add(invader);
                 
             }
         }
+        spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
         spaceShip.setFill(new ImagePattern(playerOrange));
-        
-         
-        
+        pane.getChildren().add(spaceShip);
+    
     }
     private void changelevel(int currentLevel){
         switch(currentLevel){
@@ -367,6 +377,20 @@ public class MainAppController {
         
         
 
+    }
+    private void checkGameWon(){
+        if(currentLevel == 3){
+            if(numOfEnemies == 0){
+            animation.stop();
+            Text gameWonText = new Text("Victory!!");
+            gameWonText.setFont(Font.font(50));
+            gameWonText.setFill(Color.BLUE);
+            gameWonText.setX(200);
+            gameWonText.setY(300);
+            pane.getChildren().add(gameWonText);
+            gamewon.play();
+            }
+        }
     }
 
     }
