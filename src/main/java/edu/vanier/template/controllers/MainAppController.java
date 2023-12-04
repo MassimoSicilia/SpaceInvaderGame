@@ -65,7 +65,7 @@ public class MainAppController {
     Image bulletBlue = new Image("/images/laserBlue01.png");
     Image bulletRed = new Image("/images/laserRed01.png");
     Image explosionEffect = new Image("/images/explosion00.png");
-    Image enemyLaser = new Image("/laserGreen10.png");
+    Image enemyLaser = new Image("/images/laserGreen10.png");
     
     private final Paint redLaser = new ImagePattern(bulletRed);
     private final Paint blueLaser = new ImagePattern(bulletBlue);
@@ -77,8 +77,8 @@ public class MainAppController {
     
     @FXML
     public void initialize() {
-        levelOne();
         
+        changelevel(currentLevel);
         pane.setBackground(new Background(new BackgroundImage(new Image("/images/starfield_alpha.png"), 
                 BackgroundRepeat.REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT,BackgroundSize.DEFAULT)));
 
@@ -108,31 +108,10 @@ public class MainAppController {
             }
         };
         animation.start();
-//        nextLevel(); 
         
     }
 
-//    private void nextLevel() {
-//        
-//        int rows = 3;
-//        int columns = 5;
-//        int invaderWidth = 30;
-//        int invaderHeight = 30;
-//        
-//        for(int i = 0; i < rows;i++ ){
-//            for(int j = 0; j <columns; j++){
-//                int x = 100 + j * (invaderWidth + 50);
-//                int y = 150 + i*(invaderHeight + 50);
-//                
-//                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.CORAL);
-//                invader.setFill(new ImagePattern(enemy1));
-//                
-//                pane.getChildren().add(invader);
-//                
-//            }
-//        }
-//
-//    }
+
 
     private List<Sprite> sprites() {
         try{
@@ -151,7 +130,7 @@ public class MainAppController {
             switch (sprite.getType()) {
 
                 case ENEMY_BULLET -> {
-                    sprite.moveDown();
+                    sprite.enemyMoveDown();
                     
 
                     if (sprite.getBoundsInParent().intersects(spaceShip.getBoundsInParent())) {
@@ -173,7 +152,7 @@ public class MainAppController {
                         if (sprite.getBoundsInParent().intersects(enemy.getBoundsInParent())) {
                             enemy.setDead(true);
                             sprite.setDead(true);
-                            numOfEnemies--;
+                            
                         }
                     });
                     }catch(Exception e){
@@ -184,7 +163,7 @@ public class MainAppController {
                 case ENEMY -> {
                     if (elapsedTime > 2) {
                         if (Math.random() < 0.2) {
-                            shoot(sprite);
+//                            shoot(sprite);
                         }
                     }
                     if(elapsedTime > 2){
@@ -199,13 +178,22 @@ public class MainAppController {
         });
 
         pane.getChildren().removeIf(n -> {
+            Sprite sprite;
             try{
-            Sprite sprite = (Sprite) n;
+            sprite = (Sprite) n;
+            if(sprite.isDead()){
+                if(sprite.getType() == SpriteType.ENEMY){
+                    numOfEnemies--;
+                }
+            }
             return sprite.isDead();
             }catch(Exception e){
                 return false;
             }
         });
+        if(numOfEnemies == 0){
+            changelevel(currentLevel + 1);
+        }
 
         if (elapsedTime > 2) {
             elapsedTime = 0;
@@ -215,12 +203,21 @@ public class MainAppController {
     private void shoot(Sprite who) {
         SpriteType whoType = who.getType();
         if (whoType.equals(SpriteType.PLAYER)) whoType = SpriteType.PLAYER_BULLET;
+        
+        
         else if (whoType.equals(SpriteType.ENEMY)) whoType = SpriteType.ENEMY_BULLET;
         bullet = new Sprite((int) who.getTranslateX() + 20, 
                 (int) who.getTranslateY(), 5, 20, whoType, 
                 Color.TRANSPARENT);
+        if(whoType == SpriteType.ENEMY_BULLET){
+            bullet.setFill(new ImagePattern(enemyLaser));
+                    pane.getChildren().add(bullet);
+
+        }else{
         bullet.setFill(bulletColor);
-        pane.getChildren().add(bullet);
+                pane.getChildren().add(bullet);
+
+        }
         
         //explosion effect for player
         Sprite explosionSprite = new Sprite((int) who.getTranslateX(),
@@ -236,10 +233,7 @@ public class MainAppController {
         fadeOut.setToValue(0);
         fadeOut.setOnFinished(e -> pane.getChildren().remove(explosionSprite));
         fadeOut.play();
-        
-        
-  
-        
+
         explosion.play();
     }
 
@@ -267,7 +261,7 @@ public class MainAppController {
 
     
     private void levelOne(){
-
+        currentLevel = 1;
         numOfEnemies = 15;
         int rows = 3;
         int columns = 5;
@@ -275,7 +269,7 @@ public class MainAppController {
         int invaderHeight = 30;
         
          for(int i = 0; i < rows;i++ ){
-            for(int j = 0; j <columns; j++){
+            for(int j = 0; j < columns; j++){
                 int x = 100 + j * (invaderWidth + 50);
                 int y = 150 + i*(invaderHeight + 50);
                 
@@ -286,6 +280,7 @@ public class MainAppController {
                 
             }
         }
+         
         spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
         spaceShip.setFill(new ImagePattern(playerBlue));
         
@@ -294,6 +289,8 @@ public class MainAppController {
         
     }
     private void levelTwo(){
+        
+        currentLevel = 2;
         int rows = 3;
         int columns = 6;
         int invaderWidth = 30;
@@ -305,20 +302,19 @@ public class MainAppController {
                 int y = 150 + i*(invaderHeight + 50);
                 
                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
-                invader.setFill(new ImagePattern(enemyGreen));
+                invader.setFill(new ImagePattern(enemyBlack));
                 
                 pane.getChildren().add(invader);
                 
             }
         }
-        spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
-        spaceShip.setFill(new ImagePattern(playerBlue));
+        spaceShip.setFill(new ImagePattern(playerRed));
         
-        pane.getChildren().add(spaceShip);
 
     }
     
     private void levelThree(){
+        currentLevel = 3;
         int rows = 4;
         int columns = 5;
         int invaderWidth = 30;
@@ -330,34 +326,34 @@ public class MainAppController {
                 int y = 150 + i*(invaderHeight + 50);
                 
                  invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
-                invader.setFill(new ImagePattern(enemyGreen));
+                invader.setFill(new ImagePattern(enemyRed));
                 
                 pane.getChildren().add(invader);
                 
             }
         }
-         spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
-        spaceShip.setFill(new ImagePattern(playerBlue));
+        spaceShip.setFill(new ImagePattern(playerOrange));
         
-        pane.getChildren().add(spaceShip);
          
         
     }
     private void changelevel(int currentLevel){
         switch(currentLevel){
-            case 0 -> {
+            case 1 ->{
                 levelOne();
-                currentLevel++;
-                }
-            case 1 -> {
-                levelTwo();
-                currentLevel++;
-                }
-            case 2 -> {
-                levelThree();
-                currentLevel++;
             }
+  
+            case 2 -> {
+                levelTwo();
+                
+                }
+            case 3 -> {
+                levelThree();
+                
+            }
+            
         }
+        currentLevel++;
         
     
     }
