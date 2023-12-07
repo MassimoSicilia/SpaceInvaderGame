@@ -6,14 +6,12 @@ package edu.vanier.template.controllers;
 
 import edu.vanier.template.models.Sprite;
 import edu.vanier.template.models.Sprite.SpriteType;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.animation.AnimationTimer;
 import javafx.animation.FadeTransition;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import static javafx.scene.input.KeyCode.A;
 import static javafx.scene.input.KeyCode.D;
@@ -31,8 +29,6 @@ import javafx.scene.media.AudioClip;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.paint.Paint;
-
-
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
@@ -48,6 +44,7 @@ public class MainAppController {
     private Sprite spaceShip;
     private Sprite invader;
     private Sprite bullet;
+    private Sprite explosionSprite;
     private Scene scene;
     private int numOfEnemies;
     private int currentLevel = 1;
@@ -56,6 +53,7 @@ public class MainAppController {
     private Image enemy;
     AnimationTimer animation;
     Text txtLevel;
+    Text txtLives;
 
     public static AudioClip gamewon = new AudioClip(MainAppController.class.getResource("/sounds/round_end.wav").toExternalForm());
     public static AudioClip gameOver = new AudioClip(MainAppController.class.getResource("/sounds/GameOver.wav").toExternalForm());
@@ -78,6 +76,7 @@ public class MainAppController {
         
         changelevel(currentLevel);
         showLevel();
+//        showLives();
         pane.setBackground(new Background(new BackgroundImage(new Image("/images/starfield_alpha.png"), 
                 BackgroundRepeat.REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT,BackgroundSize.DEFAULT)));
 
@@ -98,11 +97,11 @@ public class MainAppController {
     }
 
     private void createContent() {
-        pane.setPrefSize(600, 800);
+        pane.setPrefSize(800, 800);
         //-- Create the game loop.
         animation = new AnimationTimer() {
             @Override
-            public void handle(long now) {
+            public void handle(long now) {        
                 update();
             }
         };
@@ -119,7 +118,7 @@ public class MainAppController {
                     Sprite).map(n -> (Sprite) n).
                     collect(Collectors.toList());
         }catch(Exception e){
-            System.out.println(e.getMessage());;
+            System.out.println(e.getMessage());
             
         }
         return null;
@@ -139,7 +138,8 @@ public class MainAppController {
                     if (sprite.getBoundsInParent().intersects(spaceShip.getBoundsInParent())) {
                         sprite.setDead(true);
                         spaceShip.decreaseHealth();
-                        
+                        playerHit();
+
                         if(spaceShip.getHealth() == 0){
                             spaceShip.setDead(true);
                             pane.getChildren().remove(spaceShip);
@@ -152,9 +152,10 @@ public class MainAppController {
                 case PLAYER_BULLET -> {
                     sprite.moveUp();
                     try{
-                    sprites().stream().filter(e -> e.getType().equals(SpriteType.ENEMY)).forEach(enemy -> {
-                        if (sprite.getBoundsInParent().intersects(enemy.getBoundsInParent())) {
-                            enemy.setDead(true);
+                    sprites().stream().filter(e -> e.getType().equals(SpriteType.ENEMY)).forEach(invader -> {
+                        if (sprite.getBoundsInParent().intersects(invader.getBoundsInParent())) {
+                            enemyHit();
+                            invader.setDead(true);
                             sprite.setDead(true);
                             
                         }
@@ -233,21 +234,7 @@ public class MainAppController {
                 pane.getChildren().add(bullet);
 
         }
-        
-        //explosion effect for player
-        Sprite explosionSprite = new Sprite((int) who.getTranslateX(),
-                (int) who.getTranslateY()-10, 30,30, 
-                SpriteType.EXPLOSION, Color.TRANSPARENT);
-        explosionSprite.setFill(new ImagePattern(explosionEffect));
-        pane.getChildren().add(explosionSprite);
-        
-        
-        //removing effect
-        FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.5),explosionSprite);
-        fadeOut.setFromValue(1);
-        fadeOut.setToValue(0);
-        fadeOut.setOnFinished(e -> pane.getChildren().remove(explosionSprite));
-        fadeOut.play();
+  
 
         bulletAudio.play();
     }
@@ -311,6 +298,7 @@ public class MainAppController {
         enemy = new Image("images/enemyBlack1.png");
         player = new Image("/images/playerShip3_red.png");
         bulletAudio = new AudioClip(MainAppController.class.getResource("/sounds/laser1.wav").toExternalForm());
+        
         currentLevel = 2;
         numOfEnemies = 18;
         int rows = 3;
@@ -373,11 +361,14 @@ public class MainAppController {
   
             case 2 -> {
                 levelTwo();
+                txtLevel.setText("Level 2");
+
                 
                 }
             case 3 -> {
                 levelThree();
-                
+                txtLevel.setText("Level 3");
+
             }
             
         }
@@ -412,12 +403,53 @@ public class MainAppController {
     }
     
     private void  showLevel(){
-        txtLevel = new Text("Level: " + currentLevel);
+        txtLevel = new Text("Level " + currentLevel);
         txtLevel.setFont(Font.font(25));
         txtLevel.setFill(Color.WHITE);
         txtLevel.setX(250);
         txtLevel.setY(75);
         pane.getChildren().add(txtLevel);
+    }
+    
+//    private void showLives(){
+//        txtLives = new Text("Lives: " + spaceShip.getHealth());
+//        txtLives.setFont(Font.font(15));
+//        txtLevel.setFill(Color.WHITE);
+//        txtLevel.setX(250);
+//        txtLevel.setY(75);
+//        pane.getChildren().add(txtLives);
+//
+//        
+//    }
+    private void playerHit(){
+         explosionSprite = new Sprite((int) spaceShip.getTranslateX(),
+                (int) spaceShip.getTranslateY()-10,30,30, 
+                SpriteType.EXPLOSION, Color.TRANSPARENT);
+        explosionSprite.setFill(new ImagePattern(explosionEffect));
+        pane.getChildren().add(explosionSprite);
+        
+        //removing effect
+        FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.5), explosionSprite);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+        fadeOut.setOnFinished(e -> pane.getChildren().remove(explosionSprite));
+        fadeOut.play();
+        
+    }
+    private void enemyHit(){
+         explosionSprite = new Sprite((int) invader.getTranslateX(),
+                 (int) invader.getTranslateY() + 10, 30,30, SpriteType.EXPLOSION, Color.TRANSPARENT);
+        
+         explosionSprite.setFill(new ImagePattern(explosionEffect));
+         pane.getChildren().add(explosionSprite);
+         
+        //removing effect
+        FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.5), explosionSprite);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+        fadeOut.setOnFinished(e -> pane.getChildren().remove(explosionSprite));
+        fadeOut.play();
+         
     }
 
     }
