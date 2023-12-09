@@ -55,9 +55,10 @@ public class MainAppController {
     Text txtLevel;
     Text txtLives;
 
-    public static AudioClip gamewon = new AudioClip(MainAppController.class.getResource("/sounds/round_end.wav").toExternalForm());
-    public static AudioClip gameOver = new AudioClip(MainAppController.class.getResource("/sounds/GameOver.wav").toExternalForm());
-
+    private AudioClip gamewon = new AudioClip(MainAppController.class.getResource("/sounds/round_end.wav").toExternalForm());
+    private AudioClip gameOver = new AudioClip(MainAppController.class.getResource("/sounds/GameOver.wav").toExternalForm());
+    private AudioClip explosionAudio = new AudioClip(MainAppController.class.getResource("/sounds/8bit_bomb_explosion.wav").toExternalForm());
+    
     Image bulletBlue = new Image("/images/laserBlue01.png");
     Image bulletRed = new Image("/images/laserRed01.png");
     Image explosionEffect = new Image("/images/explosion00.png");
@@ -75,8 +76,10 @@ public class MainAppController {
     public void initialize() {
         
         changelevel(currentLevel);
-        showLevel();
-//        showLives();
+        showLevel(); 
+        
+        
+
         pane.setBackground(new Background(new BackgroundImage(new Image("/images/starfield_alpha.png"), 
                 BackgroundRepeat.REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT,BackgroundSize.DEFAULT)));
 
@@ -139,12 +142,15 @@ public class MainAppController {
                         sprite.setDead(true);
                         spaceShip.decreaseHealth();
                         playerHit();
+                        explosionAudio.play();
 
                         if(spaceShip.getHealth() == 0){
                             spaceShip.setDead(true);
                             pane.getChildren().remove(spaceShip);
                             checkGameOver();
                         }
+                        showLives();
+                        
                     }
                 }
                 
@@ -152,10 +158,11 @@ public class MainAppController {
                 case PLAYER_BULLET -> {
                     sprite.moveUp();
                     try{
-                    sprites().stream().filter(e -> e.getType().equals(SpriteType.ENEMY)).forEach(invader -> {
-                        if (sprite.getBoundsInParent().intersects(invader.getBoundsInParent())) {
-                            enemyHit();
-                            invader.setDead(true);
+                    sprites().stream().filter(e -> e.getType().equals(SpriteType.ENEMY)).forEach(enemy -> {
+                        if (sprite.getBoundsInParent().intersects(enemy.getBoundsInParent())) {
+                            enemyHit(enemy);
+                            explosionAudio.play();
+                            enemy.setDead(true);
                             sprite.setDead(true);
                             
                         }
@@ -167,7 +174,7 @@ public class MainAppController {
     
                 case ENEMY -> {
                     if (elapsedTime > 2) {
-                        if (Math.random() < 0.2) {
+                        if (Math.random() < 0.1) {
                             shoot(sprite);
                         }
                     }
@@ -202,7 +209,7 @@ public class MainAppController {
         
         if(currentLevel == 1 || currentLevel == 2){
         if(numOfEnemies == 0){
-            pane.getChildren().removeAll(spaceShip);
+            pane.getChildren().removeAll(spaceShip,txtLives);
             changelevel(currentLevel + 1);
         }
         }else if(currentLevel == 3){
@@ -266,7 +273,7 @@ public class MainAppController {
     private void levelOne(){
         enemy = new Image("/images/enemyGreen3.png");
         player = new Image("/images/playerShip1_blue.png");
-        bulletAudio = new AudioClip(MainAppController.class.getResource("/sounds/8bit_bomb_explosion.wav").toExternalForm());
+        bulletAudio = new AudioClip(MainAppController.class.getResource("/sounds/laser5.wav").toExternalForm());
         currentLevel = 1;
         numOfEnemies = 15;
         int rows = 3;
@@ -354,6 +361,13 @@ public class MainAppController {
     
     }
     private void changelevel(int currentLevel){
+        try{
+        txtLives = new Text("Lives: 3");
+        txtLives.setFont(Font.font(20));
+        txtLives.setFill(Color.RED);
+        txtLives.setX(50);
+        txtLives.setY(60);
+        pane.getChildren().add(txtLives);
         switch(currentLevel){
             case 1 ->{
                 levelOne();
@@ -371,6 +385,9 @@ public class MainAppController {
 
             }
             
+        }
+        }catch(Exception e){
+            System.out.println(e.getMessage());
         }
         currentLevel++;
         
@@ -404,23 +421,18 @@ public class MainAppController {
     
     private void  showLevel(){
         txtLevel = new Text("Level " + currentLevel);
-        txtLevel.setFont(Font.font(25));
+        txtLevel.setFont(Font.font(35));
         txtLevel.setFill(Color.WHITE);
         txtLevel.setX(250);
-        txtLevel.setY(75);
+        txtLevel.setY(60);
         pane.getChildren().add(txtLevel);
     }
     
-//    private void showLives(){
-//        txtLives = new Text("Lives: " + spaceShip.getHealth());
-//        txtLives.setFont(Font.font(15));
-//        txtLevel.setFill(Color.WHITE);
-//        txtLevel.setX(250);
-//        txtLevel.setY(75);
-//        pane.getChildren().add(txtLives);
-//
-//        
-//    }
+    private void showLives(){
+        txtLives.setText("Lives: " + spaceShip.getHealth());
+
+        
+    }
     private void playerHit(){
          explosionSprite = new Sprite((int) spaceShip.getTranslateX(),
                 (int) spaceShip.getTranslateY()-10,30,30, 
@@ -436,9 +448,9 @@ public class MainAppController {
         fadeOut.play();
         
     }
-    private void enemyHit(){
-         explosionSprite = new Sprite((int) invader.getTranslateX(),
-                 (int) invader.getTranslateY() + 10, 30,30, SpriteType.EXPLOSION, Color.TRANSPARENT);
+    private void enemyHit(Sprite enemy){
+         explosionSprite = new Sprite((int) enemy.getTranslateX(),
+                 (int) enemy.getTranslateY() + 10, 30,30, SpriteType.EXPLOSION, Color.TRANSPARENT);
         
          explosionSprite.setFill(new ImagePattern(explosionEffect));
          pane.getChildren().add(explosionSprite);
@@ -451,5 +463,6 @@ public class MainAppController {
         fadeOut.play();
          
     }
+
 
     }
