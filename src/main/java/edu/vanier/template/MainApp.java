@@ -33,7 +33,7 @@ public class MainApp extends Application{
         controller = new MainAppController();
         loader.setController(controller);
         Pane root = loader.load();
-        Scene scene = new Scene(root,600, 820);
+        Scene scene = new Scene(root,900, 900);
         controller.setScene(scene);
         controller.initGameComponents();
         primaryStage.setResizable(false);

@@ -6,6 +6,7 @@ package edu.vanier.template.controllers;
 
 import edu.vanier.template.models.Sprite;
 import edu.vanier.template.models.Sprite.SpriteType;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.animation.AnimationTimer;
@@ -13,12 +14,9 @@ import javafx.animation.FadeTransition;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import static javafx.scene.input.KeyCode.A;
-import static javafx.scene.input.KeyCode.D;
-import static javafx.scene.input.KeyCode.W;
-import static javafx.scene.input.KeyCode.S;
 import static javafx.scene.input.KeyCode.SPACE;
-import static javafx.scene.input.KeyCode.R;
+import static javafx.scene.input.KeyCode.SHIFT;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundPosition;
@@ -51,13 +49,17 @@ public class MainAppController {
     private AudioClip bulletAudio;
     private Image player;
     private Image enemy;
+    private long lastNanoTime = System.nanoTime();
+    private List<String> input;
     AnimationTimer animation;
+    private int health = 3;
     Text txtLevel;
     Text txtLives;
+    Text txtNumOfEnemies;
 
-    private AudioClip gamewon = new AudioClip(MainAppController.class.getResource("/sounds/round_end.wav").toExternalForm());
-    private AudioClip gameOver = new AudioClip(MainAppController.class.getResource("/sounds/GameOver.wav").toExternalForm());
-    private AudioClip explosionAudio = new AudioClip(MainAppController.class.getResource("/sounds/8bit_bomb_explosion.wav").toExternalForm());
+    private final AudioClip gamewon = new AudioClip(MainAppController.class.getResource("/sounds/round_end.wav").toExternalForm());
+    private final AudioClip gameOver = new AudioClip(MainAppController.class.getResource("/sounds/GameOver.wav").toExternalForm());
+    private final AudioClip explosionAudio = new AudioClip(MainAppController.class.getResource("/sounds/8bit_bomb_explosion.wav").toExternalForm());
     
     Image bulletBlue = new Image("/images/laserBlue01.png");
     Image bulletRed = new Image("/images/laserRed01.png");
@@ -77,8 +79,6 @@ public class MainAppController {
         
         changelevel(currentLevel);
         showLevel(); 
-        
-        
 
         pane.setBackground(new Background(new BackgroundImage(new Image("/images/starfield_alpha.png"), 
                 BackgroundRepeat.REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT,BackgroundSize.DEFAULT)));
@@ -86,16 +86,22 @@ public class MainAppController {
     }
     public void initGameComponents() {
         createContent();
-        this.scene.setOnKeyPressed(e -> {
-            switch (e.getCode()) {
-                case A -> spaceShip.moveLeft();
-                case D -> spaceShip.moveRight();
-                case SPACE -> shoot(spaceShip);
-                case W -> spaceShip.moveUp();
-                case S -> spaceShip.moveDown();
-                case R -> changeBullet();
- 
+
+        input = new ArrayList<>();
+        scene.setOnKeyPressed((KeyEvent e) -> {
+            String code = e.getCode().toString();
+            if (!input.contains(code)) {
+                input.add(code);
+            }if(e.getCode() == SPACE){
+                shoot(spaceShip);
+            }if(e.getCode() == SHIFT){
+                changeBullet();
             }
+        });
+
+        scene.setOnKeyReleased((KeyEvent e) -> {
+            String code = e.getCode().toString();
+            input.remove(code);
         });
     }
 
@@ -104,15 +110,36 @@ public class MainAppController {
         //-- Create the game loop.
         animation = new AnimationTimer() {
             @Override
-            public void handle(long now) {        
+            public void handle(long now) {    
+                double time = (now - lastNanoTime) / 100;
+                lastNanoTime = now;
+                
+                spaceShip.setVelocity(0, 0);
+                spaceShip.setVelocity(0, 0);
+                if(input.contains("D")){
+                    spaceShip.addVelocity(-0.5, 0);
+                    spaceShip.moveRight();
+                }
+                if(input.contains("A")){
+                    spaceShip.addVelocity(0.5,0);
+                    spaceShip.moveLeft();
+                }
+                if(input.contains("W")){
+                    spaceShip.addVelocity(0, -100);
+                    spaceShip.moveUp();
+                }
+                if(input.contains("S")){
+                    spaceShip.addVelocity(0, 100);
+                    spaceShip.moveDown();
+                }
+
+                spaceShip.updatePlayer(time);
                 update();
             }
         };
         animation.start();
         
     }
-
-
 
     private List<Sprite> sprites() {
         
@@ -135,12 +162,14 @@ public class MainAppController {
             switch (sprite.getType()) {
 
                 case ENEMY_BULLET -> {
-                    sprite.enemyMoveDown();
+                    sprite.enemyBulletMoveDown();
                     
 
                     if (sprite.getBoundsInParent().intersects(spaceShip.getBoundsInParent())) {
                         sprite.setDead(true);
                         spaceShip.decreaseHealth();
+                        health--;
+                        txtLives.setText("Lives: " + health);
                         playerHit();
                         explosionAudio.play();
 
@@ -149,14 +178,15 @@ public class MainAppController {
                             pane.getChildren().remove(spaceShip);
                             checkGameOver();
                         }
-                        showLives();
+                        
+                        showEnemies();
                         
                     }
                 }
                 
 
                 case PLAYER_BULLET -> {
-                    sprite.moveUp();
+                    sprite.playerBulletMoveUp();
                     try{
                     sprites().stream().filter(e -> e.getType().equals(SpriteType.ENEMY)).forEach(enemy -> {
                         if (sprite.getBoundsInParent().intersects(enemy.getBoundsInParent())) {
@@ -174,17 +204,16 @@ public class MainAppController {
     
                 case ENEMY -> {
                     if (elapsedTime > 2) {
-                        if (Math.random() < 0.1) {
+                        if (Math.random() < 0.2) {
                             shoot(sprite);
-                        }
-                    }
-                    if(elapsedTime > 2){
-                        if(Math.random() < 0.5){
-                            sprite.moveRight();
+                            sprite.moveEnemyLeft();
                         }else{
-                            sprite.moveLeft();
+                            sprite.moveEnemyRight();
                         }
                     }
+                    
+                    
+ 
                 }
             }
             
@@ -199,6 +228,7 @@ public class MainAppController {
             if(sprite.isDead()){
                 if(sprite.getType() == SpriteType.ENEMY){
                     numOfEnemies--;
+                    txtNumOfEnemies.setText("Enemies: " + numOfEnemies);
                 }
             }
             return sprite.isDead();
@@ -209,8 +239,13 @@ public class MainAppController {
         
         if(currentLevel == 1 || currentLevel == 2){
         if(numOfEnemies == 0){
-            pane.getChildren().removeAll(spaceShip,txtLives);
+            try{
+            pane.getChildren().removeAll(spaceShip,txtLives, txtNumOfEnemies);
+            health = 3;
             changelevel(currentLevel + 1);
+            }catch(Exception e){
+                System.out.println(e.getMessage());
+            }
         }
         }else if(currentLevel == 3){
             if(numOfEnemies == 0){
@@ -260,15 +295,27 @@ public class MainAppController {
             Text gameOverText = new Text("Game Over");
             gameOverText.setFont(Font.font(50));
             gameOverText.setFill(Color.RED);
-            gameOverText.setX(200);
+            gameOverText.setX(370);
             gameOverText.setY(300);
             pane.getChildren().add(gameOverText);
             animation.stop();
             gameOver.play();
         }
     }
-    
-    
+    private void checkGameWon(){
+        if(currentLevel == 3){
+            if(numOfEnemies == 0){
+            animation.stop();
+            Text txtGameWon = new Text("Victory!!");
+            txtGameWon.setFont(Font.font(50));
+            txtGameWon.setFill(Color.BLUE);
+            txtGameWon.setX(370);
+            txtGameWon.setY(300);
+            pane.getChildren().add(txtGameWon);
+            gamewon.play();
+            }
+        }
+    }
     
     private void levelOne(){
         enemy = new Image("/images/enemyGreen3.png");
@@ -283,7 +330,7 @@ public class MainAppController {
         
          for(int i = 0; i < rows;i++ ){
             for(int j = 0; j < columns; j++){
-                int x = 100 + j * (invaderWidth + 50);
+                int x = 250 + j * (invaderWidth + 50);
                 int y = 150 + i*(invaderHeight + 50);
                 
                  invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
@@ -294,7 +341,7 @@ public class MainAppController {
             }
         }
          
-        spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
+        spaceShip = new Sprite(400, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
         spaceShip.setFill(new ImagePattern(player));
         
         pane.getChildren().add(spaceShip);
@@ -315,7 +362,7 @@ public class MainAppController {
         
          for(int i = 0; i < rows;i++ ){
             for(int j = 0; j <columns; j++){
-                int x = 100 + j * (invaderWidth + 50);
+                int x = 250 + j * (invaderWidth + 50);
                 int y = 150 + i*(invaderHeight + 50);
                 
                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
@@ -325,7 +372,7 @@ public class MainAppController {
                 
             }
         }
-        spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
+        spaceShip = new Sprite(400, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
         spaceShip.setFill(new ImagePattern(player));
         pane.getChildren().add(spaceShip);
         
@@ -345,7 +392,7 @@ public class MainAppController {
         
          for(int i = 0; i < rows;i++ ){
             for(int j = 0; j <columns; j++){
-                int x = 100 + j * (invaderWidth + 50);
+                int x = 250 + j * (invaderWidth + 50);
                 int y = 150 + i*(invaderHeight + 50);
                 
                 invader = new Sprite(x, y, invaderWidth, invaderHeight, SpriteType.ENEMY, Color.TRANSPARENT);
@@ -355,43 +402,39 @@ public class MainAppController {
                 
             }
         }
-        spaceShip = new Sprite(300, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
+        spaceShip = new Sprite(400, 750, 40, 40, SpriteType.PLAYER, Color.BLUE);
         spaceShip.setFill(new ImagePattern(player));
         pane.getChildren().add(spaceShip);
     
     }
     private void changelevel(int currentLevel){
         try{
-        txtLives = new Text("Lives: 3");
-        txtLives.setFont(Font.font(20));
-        txtLives.setFill(Color.RED);
-        txtLives.setX(50);
-        txtLives.setY(60);
-        pane.getChildren().add(txtLives);
+        showLives();
+        showEnemies();
+       
+       
         switch(currentLevel){
             case 1 ->{
                 levelOne();
             }
-  
             case 2 -> {
                 levelTwo();
                 txtLevel.setText("Level 2");
+                txtNumOfEnemies.setText("Enemies: 18");
 
-                
                 }
             case 3 -> {
                 levelThree();
                 txtLevel.setText("Level 3");
-
+                txtNumOfEnemies.setText("Enemies: 20");
             }
-            
         }
+        
         }catch(Exception e){
             System.out.println(e.getMessage());
         }
+         pane.getChildren().addAll(txtLives,txtNumOfEnemies);
         currentLevel++;
-        
-    
     }
     
     private void changeBullet(){
@@ -404,35 +447,8 @@ public class MainAppController {
         
 
     }
-    private void checkGameWon(){
-        if(currentLevel == 3){
-            if(numOfEnemies == 0){
-            animation.stop();
-            Text txtGameWon = new Text("Victory!!");
-            txtGameWon.setFont(Font.font(50));
-            txtGameWon.setFill(Color.BLUE);
-            txtGameWon.setX(200);
-            txtGameWon.setY(300);
-            pane.getChildren().add(txtGameWon);
-            gamewon.play();
-            }
-        }
-    }
     
-    private void  showLevel(){
-        txtLevel = new Text("Level " + currentLevel);
-        txtLevel.setFont(Font.font(35));
-        txtLevel.setFill(Color.WHITE);
-        txtLevel.setX(250);
-        txtLevel.setY(60);
-        pane.getChildren().add(txtLevel);
-    }
     
-    private void showLives(){
-        txtLives.setText("Lives: " + spaceShip.getHealth());
-
-        
-    }
     private void playerHit(){
          explosionSprite = new Sprite((int) spaceShip.getTranslateX(),
                 (int) spaceShip.getTranslateY()-10,30,30, 
@@ -448,6 +464,7 @@ public class MainAppController {
         fadeOut.play();
         
     }
+    
     private void enemyHit(Sprite enemy){
          explosionSprite = new Sprite((int) enemy.getTranslateX(),
                  (int) enemy.getTranslateY() + 10, 30,30, SpriteType.EXPLOSION, Color.TRANSPARENT);
@@ -462,6 +479,41 @@ public class MainAppController {
         fadeOut.setOnFinished(e -> pane.getChildren().remove(explosionSprite));
         fadeOut.play();
          
+    }
+    
+    private void showEnemies(){
+        txtNumOfEnemies = new Text();
+        txtNumOfEnemies.setFont(Font.font(20));
+        txtNumOfEnemies.setFill(Color.RED);
+        txtNumOfEnemies.setX(50);
+        txtNumOfEnemies.setY(40);
+        switch(currentLevel){
+            case 1 -> txtNumOfEnemies.setText("Enemies: 15");
+            case 2 -> txtNumOfEnemies.setText("Enemies: 18");
+            case 3 -> txtNumOfEnemies.setText("Enemies: 20");
+        }
+    }
+    private void showLives(){
+        txtLives = new Text();
+        txtLives.setFont(Font.font(20));
+        txtLives.setFill(Color.RED);
+        txtLives.setX(50);
+        txtLives.setY(60);
+        switch (health) {
+            case 3 -> txtLives.setText("Lives: 3");
+            case 2 -> txtLives.setText("Lives: 2");
+            case 1 -> txtLives.setText("Lives: 1");
+            case 0 -> txtLives.setText("Lives: 0");
+            
+        }
+    }
+    private void showLevel(){
+        txtLevel = new Text("Level " + currentLevel);
+        txtLevel.setFont(Font.font(35));
+        txtLevel.setFill(Color.WHITE);
+        txtLevel.setX(400);
+        txtLevel.setY(60);
+        pane.getChildren().add(txtLevel);
     }
 
 
